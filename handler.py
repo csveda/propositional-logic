@@ -29,13 +29,12 @@ class OperationHandler:
             >>> OperationHandler.handle(line)
             Will call the 'S' entry in OperationHandler.OPERATIONS dict
         """
-        # print(line)
-        # Split the line to get the operation and its params
-        params = line.split(',')
-        # The operation is the first argument
-        operation = params[0]
-        if operation in cls.OPERATIONS:
+        # Split the line to get the operation (first argument)
+        requested_operation = line.split(',')[0]
+        if requested_operation in cls.OPERATIONS:
             # Call the respective operation with the given params
-            return cls.OPERATIONS[operation].perform(*params[1:])
+            operation = cls.OPERATIONS[requested_operation]()
+            args = operation.parse(line)
+            return operation.perform(*args)
         else:
             raise Exception('Invalid operation "%s"' % operation)

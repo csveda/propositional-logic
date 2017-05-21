@@ -20,7 +20,7 @@ with open(input_file) as file:
     entries = [entry.strip() for entry in file if entry is not '\n']
 
 # Regexp to match only the accepted characters
-pattern = re.compile(r'^\[([a-z0-9SEQCL, &\-\|><\(\)]*)\]$')
+pattern = re.compile(r'^\[([a-z0-9SEQCL, &\-\|><\(\)\[\]]*)\]$')
 
 lines_with_error = []
 results = []
