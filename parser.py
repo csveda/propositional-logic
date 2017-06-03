@@ -40,6 +40,7 @@ with open(result_file, 'w') as results_file:
     for result in results:
         if result is not None:
             results_file.write(result)
+            results_file.write('\n')
 
 if lines_with_error:
     print('Lines with error (not parsed):')
