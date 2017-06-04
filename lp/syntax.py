@@ -53,6 +53,10 @@ class PropositionalSymbol(Symbol):
         """
         return [self]
 
+    def str_representation(self):
+        """String representation of the symbol."""
+        return self.value
+
 
 class PontuationSymbol(Symbol):
     """
@@ -109,6 +113,27 @@ class BinaryOperator(Operator):
         """
         return [self] + self.arg1.subformulas() + self.arg2.subformulas()
 
+    def str_representation(self):
+        """String representation of the formula."""
+        if self.arg1.is_a(PropositionalSymbol) or (
+            self.arg1.is_a(Operator) and
+            self.precendence <= self.arg1.precendence
+        ):
+            # In this case do not need parenthesis
+            arg1_repr = self.arg1.str_representation()
+        else:
+            arg1_repr = '(' + self.arg1.str_representation() + ')'
+
+        if self.arg2.is_a(PropositionalSymbol) or (
+            self.arg2.is_a(Operator) and
+            self.precendence <= self.arg2.precendence
+        ):
+            arg2_repr = self.arg2.str_representation()
+        else:
+            arg2_repr = '(' + self.arg2.str_representation() + ')'
+
+        return arg1_repr + self.SYMBOL + arg2_repr
+
 
 class UnaryOperator(Operator):
     """Describe unary operators."""
@@ -125,10 +150,18 @@ class UnaryOperator(Operator):
         """
         return [self] + self.arg1.subformulas()
 
+    def str_representation(self):
+        """String representation of the formula."""
+        if self.arg1.is_a(PropositionalSymbol):
+            return self.SYMBOL + self.arg1.str_representation()
+        else:
+            return self.SYMBOL + '(' + self.arg1.str_representation() + ')'
+
 
 class Negation(UnaryOperator):
     """Describe the negation operator."""
 
+    SYMBOL = '-'
     accepted_initial_char = '\-'
     pattern = '\-'
 
@@ -139,6 +172,7 @@ class Negation(UnaryOperator):
 class Conjunction(BinaryOperator):
     """Describe the conjunction operator."""
 
+    SYMBOL = '&'
     accepted_initial_char = '&'
     pattern = '&'
 
@@ -149,6 +183,7 @@ class Conjunction(BinaryOperator):
 class Disjunction(BinaryOperator):
     """Describe the disjunction operator."""
 
+    SYMBOL = '|'
     accepted_initial_char = '\|'
     pattern = '\|'
 
@@ -159,6 +194,7 @@ class Disjunction(BinaryOperator):
 class Implication(BinaryOperator):
     """Describe the implication operator."""
 
+    SYMBOL = '->'
     accepted_initial_char = '\-'
     pattern = '\->'
 
@@ -169,6 +205,7 @@ class Implication(BinaryOperator):
 class BiImplication(BinaryOperator):
     """Describe the bi-implication operator."""
 
+    SYMBOL = '<->'
     accepted_initial_char = '<'
     pattern = '<\->'
 
