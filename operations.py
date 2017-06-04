@@ -1,6 +1,6 @@
 """Describe the possible operations."""
 
-from lp.interpreter import TruthTable
+from lp.interpreter import TruthTable, SetTruthTable
 
 
 class Operation:
@@ -82,10 +82,17 @@ class SemanticEquivalence(Operation):
         models2 = table2.get_formula_models()
 
         equivalent = True
-        for line_index, valuation in models1.items():
-            if line_index not in models2:
+        for valuation_index, valuation in models1.items():
+            if valuation_index not in models2:
                 equivalent = False
                 break
+
+        if equivalent:
+            # Check if the second formula models are in the first formula
+            for valuation_index, valuation in models2.items():
+                if valuation_index not in models1:
+                    equivalent = False
+                    break
 
         return equivalent
 
@@ -97,7 +104,15 @@ class Consistency(Operation):
 
     def perform(self, formulas):
         """Check if the set of formulas is consistent."""
-        pass
+        truth_table = SetTruthTable(formulas)
+        formulas_models = truth_table.get_formulas_set_models()
+
+        consistent = 'SIM' if formulas_models else 'NAO'
+
+        return '[%s, [%s]]' % (
+            consistent,
+            truth_table.str_representation()
+        )
 
     def parse(self, line):
         """Parse a bracketed, comma separated formulas into a list."""
