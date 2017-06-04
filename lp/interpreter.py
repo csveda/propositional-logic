@@ -377,6 +377,54 @@ class TruthTable:
 
         return formula_column
 
+    def str_representation(self):
+        """Build the table string representation."""
+
+        def build_formulas_line(str_table):
+            # The first line are formulas
+            str_table += '['
+            for formula_index, formula in enumerate(self.lines[0]):
+                str_table += formula.str_representation()
+                if formula_index is not len(self.lines[0]) - 1:
+                    str_table += ','
+            str_table += '], '
+            return str_table
+
+        def build_values_lines(str_table):
+
+            def build_values_columns(str_table, line):
+                # Each line is inside brackets. Ex.: '[V, V, V]'
+                str_table += '['
+                for column_index, value in enumerate(line):
+                    str_table += 'V' if value else 'F'
+                    # Separate each value with a comma, if it is not the last value
+                    if column_index is not len(line) - 1:
+                        str_table += ','
+                str_table += ']'
+                return str_table
+
+            str_table += '['
+            for line_index, line in enumerate(self.lines):
+                if line_index is 0:
+                    # Already treated above
+                    continue
+
+                str_table = build_values_columns(str_table, line)
+
+                # Separate each line with a comma, if it is not the last line
+                if line_index is not len(self.lines) - 1:
+                    str_table += ','
+            str_table += ']'
+
+            return str_table
+
+        str_table = '['
+        str_table = build_formulas_line(str_table)
+        str_table = build_values_lines(str_table)
+        str_table += ']'
+
+        return str_table
+
     def print_table(self):
         """Visually representation of the truth table."""
         for line in self.lines:
