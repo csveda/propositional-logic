@@ -1,5 +1,7 @@
 """Describe the possible operations."""
 
+from lp.interpreter import TruthTable
+
 
 class Operation:
     """Base class for operations."""
@@ -29,8 +31,31 @@ class SemanticStatus(Operation):
 
     def perform(self, formula):
         """Check a formula semantic status."""
-        pass
+        truth_table = TruthTable(formula)
+        formula = truth_table.formula
+        valuations = truth_table.get_formula_valuations(formula)
 
+        formula_values = []
+        for line, valuation in valuations.items():
+            formula_values.append(valuation[1])
+
+        status = self.check_status(formula_values)
+
+        return '[' + status + ', ' + truth_table.str_representation() + ']'
+
+    def check_status(self, formula_values):
+        """Get the formulas semantic status based on its valuations."""
+        tautology = True in formula_values and False not in formula_values
+        contradiction = False in formula_values and True not in formula_values
+
+        if tautology:
+            status = "TAUTOLOGIA"
+        elif contradiction:
+            status = "CONTRADICAO"
+        else:
+            status = "CONTINGENCIA"
+
+        return status
 
 class SemanticEquivalence(Operation):
     """Verify if two formulas are semantic equivalent."""
