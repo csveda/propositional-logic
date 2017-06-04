@@ -249,12 +249,17 @@ class Formula:
     def _get_subformulas(self):
         """Get the formula subformulas without repetion."""
         subformulas = self.formula.subformulas()
-        treated_subformulas = {}
-        for formula in subformulas:
+        return Formula.filter_repeated_formulas(subformulas)
+
+    @classmethod
+    def filter_repeated_formulas(cls, formulas):
+        """Clean repeated formulas in given set of formulas."""
+        treated_formulas = {}
+        for formula in formulas:
             formula_repr = formula.str_representation()
-            if formula_repr not in treated_subformulas:
-                treated_subformulas[formula_repr] = formula
-        return list(treated_subformulas.values())
+            if formula_repr not in treated_formulas:
+                treated_formulas[formula_repr] = formula
+        return list(treated_formulas.values())
 
 
 class TruthTable:
@@ -264,15 +269,14 @@ class TruthTable:
         """."""
         self.formula = Interpreter.parse_expression(expression)
         self.formula_handler = Formula(self.formula)
+        self.subformulas,\
+            self.prop_symbols = self.formula_handler.get_subformulas()
         self.build()
 
     def build(self):
         """Build the truth table for the given formula."""
-        subformulas, prop_symbols = self.formula_handler.get_subformulas()
-        subformulas = self.order_lexicographically(subformulas)
-        prop_symbols = self.order_lexicographically(prop_symbols)
-        self.prop_symbols = prop_symbols
-        self.subformulas = subformulas
+        subformulas = self.order_lexicographically(self.subformulas)
+        prop_symbols = self.order_lexicographically(self.prop_symbols)
 
         m = len(subformulas)
         n = len(prop_symbols)
@@ -385,7 +389,6 @@ class TruthTable:
 
     def str_representation(self):
         """Build the table string representation."""
-
         def build_formulas_line(str_table):
             # The first line are formulas
             str_table += '['
@@ -403,7 +406,8 @@ class TruthTable:
                 str_table += '['
                 for column_index, value in enumerate(line):
                     str_table += 'V' if value else 'F'
-                    # Separate each value with a comma, if it is not the last value
+                    # Separate each value with a comma,
+                    # if it is not the last value
                     if column_index is not len(line) - 1:
                         str_table += ','
                 str_table += ']'
@@ -436,3 +440,60 @@ class TruthTable:
             for column in line:
                 print(column, end='\t')
             print()
+
+
+class SetTruthTable(TruthTable):
+    """Represent a truth table of set of formulas."""
+
+    def __init__(self, expressions):
+        """."""
+        self.formulas = {}
+        all_subformulas = []
+        all_symbols = []
+        for expression in expressions:
+            formula = Interpreter.parse_expression(expression)
+            self.formulas[formula.str_representation()] = formula
+            formula_handler = Formula(formula)
+            subformulas, prop_symbols = formula_handler.get_subformulas()
+            all_subformulas.extend(subformulas)
+            all_symbols.extend(prop_symbols)
+
+        self.subformulas = Formula.filter_repeated_formulas(all_subformulas)
+        self.prop_symbols = Formula.filter_repeated_formulas(all_symbols)
+        self.build()
+
+    def get_formula_models(self, formula):
+        """Get the models of formula in the given set."""
+        return super(SetTruthTable, self) \
+            .get_formula_models(self.formulas[formula])
+
+    def get_formula_valuations(self, formula):
+        """Get the valuations of formula in the given set."""
+        return super(SetTruthTable, self) \
+            .get_formula_valuations(self.formulas[formula])
+
+    def get_formulas_set_models(self):
+        """Get the models of the set of formulas."""
+        formula_indexes = {}
+        # Find out the formulas indexes in the table
+        for formula_index, formula in enumerate(self.lines[0]):
+            if formula.str_representation() in self.formulas:
+                formula_indexes[formula_index] = formula
+
+        models = {}
+        for line_index, line in enumerate(self.lines):
+            if line_index is 0:
+                continue
+
+            column_value = None
+            for column_index, value in enumerate(line):
+                if column_index in formula_indexes:
+                    column_value = column_value and value \
+                        if column_value is not None else value
+
+            if column_value is True:
+                models[line_index] = self.get_symbols_value_for_line(
+                    line_index
+                )
+
+        return models
