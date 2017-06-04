@@ -82,7 +82,7 @@ class Scanner:
         self.current_index += 1
 
         for i in range(self.current_index, len(self.expression) + 1):
-            if PropositionalSymbol.evaluate(token_str):
+            if PropositionalSymbol.check(token_str):
                 if self.there_are_tokens():
                     token_str += self.expression[i]
                     self.current_index += 1
@@ -103,7 +103,7 @@ class Scanner:
                 token_str += self.get_current_char()
                 self.current_index += 1
                 token = None
-                if Implication.evaluate(token_str):
+                if Implication.check(token_str):
                     token = Implication(token_str)
                 else:
                     token = Negation('-')
@@ -125,7 +125,7 @@ class Scanner:
             token_str += self.get_current_char()
             self.current_index += 1
             token = None
-            if BiImplication.evaluate(token_str):
+            if BiImplication.check(token_str):
                 token = BiImplication(token_str)
         except IndexError:
             token = None
@@ -226,3 +226,109 @@ class Interpreter:
         assert len(formula_stack) is 1
 
         return formula_stack.pop()
+
+
+class Formula:
+    """Describe some formula properties and operations."""
+
+    def __init__(self, formula):
+        """."""
+        self.formula = formula
+
+    def get_subformulas(self):
+        """Separate the propositional symbols of the subformulas list."""
+        subformulas = []
+        propositional_symbols = []
+        for formula in self._get_subformulas():
+            if formula.is_a(PropositionalSymbol):
+                propositional_symbols.append(formula)
+            else:
+                subformulas.append(formula)
+        return subformulas, propositional_symbols
+
+    def _get_subformulas(self):
+        """Get the formula subformulas without repetion."""
+        subformulas = self.formula.subformulas()
+        treated_subformulas = {}
+        for formula in subformulas:
+            formula_repr = formula.str_representation()
+            if formula_repr not in treated_subformulas:
+                treated_subformulas[formula_repr] = formula
+        return list(treated_subformulas.values())
+
+
+class TruthTable:
+    """Represent a truth table of a formula."""
+
+    def __init__(self, expression):
+        """."""
+        parsed_exp = Interpreter.parse_expression(expression)
+        self.formula = Formula(parsed_exp)
+        self.build()
+
+    def order_lexicographically(self, formulas):
+        """Order a set of formulas lexicographically."""
+        # TO-DO
+        return formulas
+
+    def build(self):
+        """Build the truth table for the given formula."""
+        subformulas, prop_symbols = self.formula.get_subformulas()
+        subformulas = self.order_lexicographically(subformulas)
+        prop_symbols = self.order_lexicographically(prop_symbols)
+        m = len(subformulas)
+        n = len(prop_symbols)
+        lines_quantity = 2**n
+
+        propositional_symbols = {i: prop_symbols[i] for i in range(0, n)}
+
+        def get_symbols_value_for_line(lines, index):
+            """
+            Get the value of propositional symbols for a given line.
+
+            Return dict like: {'p': True, 'q': False}
+            """
+            return {
+                propositional_symbols[i].str_representation(): lines[index][i]
+                for i in range(0, n)
+            }
+
+        # First line is the subformulas
+        lines = [[formula for formula in (prop_symbols + subformulas)]]
+
+        # Initialize all lines with n + m columns
+        for j in range(0, lines_quantity):
+            lines.append([[] for k in range(0, n + m)])
+
+        # Fill the propositional symbols with all possible values
+        i = n
+        while i > 0:
+            value = True
+            count = 0
+            for line_index in range(1, lines_quantity + 1):
+                if count == 2**(n - i):
+                    value = not value
+                    count = 0
+                line = lines[line_index]
+                line[i - 1] = value
+                count += 1
+            i -= 1
+
+        # Calculate the subformulas values
+        i = n + 1
+        while i <= (m + n):
+            for line_index in range(1, lines_quantity + 1):
+                line = lines[line_index]
+                current_formula = lines[0][i - 1]
+                line[i - 1] = current_formula.evaluate(
+                    get_symbols_value_for_line(lines, line_index)
+                )
+            i += 1
+
+        self.lines = lines
+
+    def print_table(self):
+        for line in self.lines:
+            for column in line:
+                print(column, end='\t')
+            print()

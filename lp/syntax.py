@@ -15,7 +15,7 @@ class Symbol:
         self.value = value
 
     @classmethod
-    def evaluate(cls, symbol):
+    def check(cls, symbol):
         """Check if the given arg is a symbol."""
         regexp = re.compile(r'^%s$' % cls.pattern)
         return regexp.match(symbol)
@@ -29,6 +29,10 @@ class Symbol:
     def is_a(self, cls):
         """Check if this token is a given type."""
         return isinstance(self, cls)
+
+    def __str__(self):
+        """Return the symbol value as str."""
+        return self.value
 
 
 class PropositionalSymbol(Symbol):
@@ -56,6 +60,10 @@ class PropositionalSymbol(Symbol):
     def str_representation(self):
         """String representation of the symbol."""
         return self.value
+
+    def evaluate(self, symbol_values):
+        """Evaluate symbol with given values."""
+        return symbol_values[self.str_representation()]
 
 
 class PontuationSymbol(Symbol):
@@ -95,6 +103,14 @@ class Operator(Symbol):
     def subformulas(self):
         """Get the formula subformulas."""
         raise NotImplementedError
+
+    def evaluate(self, symbol_values):
+        """Evaluate an operator with given values."""
+        raise NotImplementedError
+
+    def __str__(self):
+        """Return the string representation as str."""
+        return self.str_representation()
 
 
 class BinaryOperator(Operator):
@@ -168,6 +184,10 @@ class Negation(UnaryOperator):
     precendence = 6
     associativity = Operator.Associativity.RIGHT
 
+    def evaluate(self, symbol_values):
+        """Evaluate a negation with given values."""
+        return not self.arg1.evaluate(symbol_values)
+
 
 class Conjunction(BinaryOperator):
     """Describe the conjunction operator."""
@@ -178,6 +198,11 @@ class Conjunction(BinaryOperator):
 
     precendence = 5
     associativity = Operator.Associativity.LEFT
+
+    def evaluate(self, symbol_values):
+        """Evaluate a conjunction with given values."""
+        return (self.arg1.evaluate(symbol_values) and
+                self.arg2.evaluate(symbol_values))
 
 
 class Disjunction(BinaryOperator):
@@ -190,6 +215,11 @@ class Disjunction(BinaryOperator):
     precendence = 4
     associativity = Operator.Associativity.LEFT
 
+    def evaluate(self, symbol_values):
+        """Evaluate a disjunction with given values."""
+        return (self.arg1.evaluate(symbol_values) or
+                self.arg2.evaluate(symbol_values))
+
 
 class Implication(BinaryOperator):
     """Describe the implication operator."""
@@ -201,6 +231,15 @@ class Implication(BinaryOperator):
     precendence = 3
     associativity = Operator.Associativity.LEFT
 
+    def evaluate(self, symbol_values):
+        """
+        Evaluate an implication with given values.
+
+        To do the trick: p -> q = -p | q
+        """
+        return (not self.arg1.evaluate(symbol_values) or
+                self.arg2.evaluate(symbol_values))
+
 
 class BiImplication(BinaryOperator):
     """Describe the bi-implication operator."""
@@ -211,3 +250,17 @@ class BiImplication(BinaryOperator):
 
     precendence = 2
     associativity = Operator.Associativity.LEFT
+
+    def evaluate(self, symbol_values):
+        """
+        Evaluate a bi-implication with given values.
+
+        To do the trick: p <-> q = (p -> q) & (q -> p) = (-p | q) & (-q | p)
+        """
+        return (
+            not self.arg1.evaluate(symbol_values) or
+            self.arg2.evaluate(symbol_values)
+        ) and (
+            not self.arg2.evaluate(symbol_values) or
+            self.arg1.evaluate(symbol_values)
+        )
