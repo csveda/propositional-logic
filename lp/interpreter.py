@@ -335,12 +335,15 @@ class TruthTable:
             for i, symbol in enumerate(self.prop_symbols)
         }
 
-    def get_formula_models(self, formula):
+    def get_formula_models(self, formula=False):
         """
         Get the formula models.
 
         The models of a formula is all valuations that are true.
         """
+        if not formula:
+            formula = self.formula
+
         models = {}
         valuations = self.get_formula_valuations(formula)
         for line_index, valuation in valuations.items():
@@ -348,8 +351,11 @@ class TruthTable:
                 models[line_index] = valuation
         return models
 
-    def get_formula_valuations(self, formula):
+    def get_formula_valuations(self, formula=False):
         """Get the valuations of a given formula by querying truth table."""
+        if not formula:
+            formula = self.formula
+
         formula_column = self.get_formula_index(formula)
         valuations = {}
         for line_index, line in enumerate(self.lines):
@@ -413,15 +419,14 @@ class TruthTable:
 
                 # Separate each line with a comma, if it is not the last line
                 if line_index is not len(self.lines) - 1:
-                    str_table += ','
+                    str_table += ', '
             str_table += ']'
 
             return str_table
 
-        str_table = '['
+        str_table = ''
         str_table = build_formulas_line(str_table)
         str_table = build_values_lines(str_table)
-        str_table += ']'
 
         return str_table
 

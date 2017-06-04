@@ -32,8 +32,7 @@ class SemanticStatus(Operation):
     def perform(self, formula):
         """Check a formula semantic status."""
         truth_table = TruthTable(formula)
-        formula = truth_table.formula
-        valuations = truth_table.get_formula_valuations(formula)
+        valuations = truth_table.get_formula_valuations()
 
         formula_values = []
         for line, valuation in valuations.items():
@@ -41,7 +40,7 @@ class SemanticStatus(Operation):
 
         status = self.check_status(formula_values)
 
-        return '[' + status + ', ' + truth_table.str_representation() + ']'
+        return '[%s, [%s]]' % (status, truth_table.str_representation())
 
     def check_status(self, formula_values):
         """Get the formulas semantic status based on its valuations."""
@@ -57,6 +56,7 @@ class SemanticStatus(Operation):
 
         return status
 
+
 class SemanticEquivalence(Operation):
     """Verify if two formulas are semantic equivalent."""
 
@@ -64,7 +64,30 @@ class SemanticEquivalence(Operation):
 
     def perform(self, formula1, formula2):
         """Check if the two formulas are equivalent."""
-        pass
+        truth_table1 = TruthTable(formula1)
+        truth_table2 = TruthTable(formula2)
+
+        quid_pro_quo = self.check_equivalence(truth_table1, truth_table2)
+        equivalent = 'SIM' if quid_pro_quo else 'NAO'
+
+        return '[%s, [%s, %s]]' % (
+            equivalent,
+            truth_table1.str_representation(),
+            truth_table2.str_representation()
+        )
+
+    def check_equivalence(self, table1, table2):
+        """."""
+        models1 = table1.get_formula_models()
+        models2 = table2.get_formula_models()
+
+        equivalent = True
+        for line_index, valuation in models1.items():
+            if line_index not in models2:
+                equivalent = False
+                break
+
+        return equivalent
 
 
 class Consistency(Operation):
