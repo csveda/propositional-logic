@@ -262,36 +262,21 @@ class TruthTable:
 
     def __init__(self, expression):
         """."""
-        parsed_exp = Interpreter.parse_expression(expression)
-        self.formula = Formula(parsed_exp)
+        self.formula = Interpreter.parse_expression(expression)
+        self.formula_handler = Formula(self.formula)
         self.build()
-
-    def order_lexicographically(self, formulas):
-        """Order a set of formulas lexicographically."""
-        # TO-DO
-        return formulas
 
     def build(self):
         """Build the truth table for the given formula."""
-        subformulas, prop_symbols = self.formula.get_subformulas()
+        subformulas, prop_symbols = self.formula_handler.get_subformulas()
         subformulas = self.order_lexicographically(subformulas)
         prop_symbols = self.order_lexicographically(prop_symbols)
+        self.prop_symbols = prop_symbols
+        self.subformulas = subformulas
+
         m = len(subformulas)
         n = len(prop_symbols)
         lines_quantity = 2**n
-
-        propositional_symbols = {i: prop_symbols[i] for i in range(0, n)}
-
-        def get_symbols_value_for_line(lines, index):
-            """
-            Get the value of propositional symbols for a given line.
-
-            Return dict like: {'p': True, 'q': False}
-            """
-            return {
-                propositional_symbols[i].str_representation(): lines[index][i]
-                for i in range(0, n)
-            }
 
         # First line is the subformulas
         lines = [[formula for formula in (prop_symbols + subformulas)]]
@@ -321,13 +306,79 @@ class TruthTable:
                 line = lines[line_index]
                 current_formula = lines[0][i - 1]
                 line[i - 1] = current_formula.evaluate(
-                    get_symbols_value_for_line(lines, line_index)
+                    self.get_symbols_value_for_line(line_index, lines=lines)
                 )
             i += 1
 
         self.lines = lines
 
+    def order_lexicographically(self, formulas):
+        """Order a set of formulas lexicographically."""
+        # TO-DO
+        return formulas
+
+    def get_symbols_value_for_line(self, line_index, lines=False):
+        """
+        Get the value of propositional symbols for a given line.
+
+        Return dict like: {'p': True, 'q': False}
+        """
+        if not lines:
+            lines = self.lines
+
+        propositional_symbols = {
+            i: symbol
+            for i, symbol in enumerate(self.prop_symbols)
+        }
+        return {
+            propositional_symbols[i].str_representation(): lines[line_index][i]
+            for i, symbol in enumerate(self.prop_symbols)
+        }
+
+    def get_formula_models(self, formula):
+        """
+        Get the formula models.
+
+        The models of a formula is all valuations that are true.
+        """
+        models = {}
+        valuations = self.get_formula_valuations(formula)
+        for line_index, valuation in valuations.items():
+            if valuation[1] is True:
+                models[line_index] = valuation
+        return models
+
+    def get_formula_valuations(self, formula):
+        """Get the valuations of a given formula by querying truth table."""
+        formula_column = self.get_formula_index(formula)
+        valuations = {}
+        for line_index, line in enumerate(self.lines):
+            # Skip first line, because it is the formulas
+            if line_index is 0:
+                continue
+            symbols_values = self.get_symbols_value_for_line(line_index)
+            valuations[line_index] = (symbols_values, line[formula_column])
+        return valuations
+
+    def get_formula_index(self, formula):
+        """Get the formula column index on the truth table."""
+        all_formulas = self.lines[0]
+        formula_column = None
+        for index, subformula in enumerate(all_formulas):
+            if subformula.str_representation() == formula.str_representation():
+                formula_column = index
+
+        if formula_column is None:
+            self.print_table()
+            raise Exception(
+                'Formula "%s" not present in truth table.'
+                % (formula.str_representation())
+            )
+
+        return formula_column
+
     def print_table(self):
+        """Visually representation of the truth table."""
         for line in self.lines:
             for column in line:
                 print(column, end='\t')
