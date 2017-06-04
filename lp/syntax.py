@@ -45,6 +45,14 @@ class PropositionalSymbol(Symbol):
     accepted_initial_char = '[a-z]'
     pattern = '([a-z]{1}[0-9]*)'
 
+    def subformulas(self):
+        """
+        Get the formula subformulas.
+
+        Return itself as it is a propositional symbol.
+        """
+        return [self]
+
 
 class PontuationSymbol(Symbol):
     """
@@ -80,6 +88,10 @@ class Operator(Symbol):
         LEFT = 1
         RIGHT = 0
 
+    def subformulas(self):
+        """Get the formula subformulas."""
+        raise NotImplementedError
+
 
 class BinaryOperator(Operator):
     """Describe binary operators."""
@@ -89,6 +101,14 @@ class BinaryOperator(Operator):
         self.arg1 = arg1
         self.arg2 = arg2
 
+    def subformulas(self):
+        """
+        Get the formula subformulas.
+
+        Return itself and the subformulas of its first and second args.
+        """
+        return [self] + self.arg1.subformulas() + self.arg2.subformulas()
+
 
 class UnaryOperator(Operator):
     """Describe unary operators."""
@@ -96,6 +116,14 @@ class UnaryOperator(Operator):
     def set_arg(self, arg):
         """Set the operator arg."""
         self.arg1 = arg
+
+    def subformulas(self):
+        """
+        Get the formula subformulas.
+
+        Return itself and the subformulas of its arg.
+        """
+        return [self] + self.arg1.subformulas()
 
 
 class Negation(UnaryOperator):

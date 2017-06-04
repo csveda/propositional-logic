@@ -140,33 +140,6 @@ class Interpreter:
     """Ability to interpret a formula."""
 
     @classmethod
-    def create_formula(cls, rpn_tokens):
-        """Create a formula based on the expression RPN notation."""
-        # Reverse the token list to use it like a stack
-        rpn_tokens.reverse()
-        formula_stack = []
-        while rpn_tokens:
-            token = rpn_tokens.pop()
-            if token.is_a(PropositionalSymbol):
-                formula_stack.append(token)
-            elif token.is_a(UnaryOperator):
-                arg = formula_stack.pop()
-                token.set_arg(arg)
-                formula_stack.append(token)
-            elif token.is_a(BinaryOperator):
-                arg2 = formula_stack.pop()
-                arg1 = formula_stack.pop()
-                token.set_args(arg1, arg2)
-                formula_stack.append(token)
-            else:
-                raise Exception('Invalid RPN expression.')
-
-        # The formula_stack must contain only the result formula
-        assert len(formula_stack) is 1
-
-        return formula_stack.pop()
-
-    @classmethod
     def parse_expression(cls, expression):
         """
         Turn an expression to the Reverse Polish Notation (RPN).
@@ -226,3 +199,30 @@ class Interpreter:
             output_queue.append(operator_stack.pop())
 
         return cls.create_formula(output_queue)
+
+    @classmethod
+    def create_formula(cls, rpn_tokens):
+        """Create a formula based on the expression RPN notation."""
+        # Reverse the token list to use it like a stack
+        rpn_tokens.reverse()
+        formula_stack = []
+        while rpn_tokens:
+            token = rpn_tokens.pop()
+            if token.is_a(PropositionalSymbol):
+                formula_stack.append(token)
+            elif token.is_a(UnaryOperator):
+                arg = formula_stack.pop()
+                token.set_arg(arg)
+                formula_stack.append(token)
+            elif token.is_a(BinaryOperator):
+                arg2 = formula_stack.pop()
+                arg1 = formula_stack.pop()
+                token.set_args(arg1, arg2)
+                formula_stack.append(token)
+            else:
+                raise Exception('Invalid RPN expression.')
+
+        # The formula_stack must contain only the result formula
+        assert len(formula_stack) is 1
+
+        return formula_stack.pop()
