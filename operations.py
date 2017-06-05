@@ -1,6 +1,6 @@
 """Describe the possible operations."""
 
-from lp.interpreter import TruthTable, SetTruthTable
+from lp.interpreter import Interpreter, TruthTable, SetTruthTable
 
 
 class Operation:
@@ -134,4 +134,65 @@ class LogicConsequence(Operation):
 
     def perform(self, formulas_set, formula):
         """Check if the formula is logic consequence of the formulas_set."""
-        pass
+        if '' in formulas_set and len(formulas_set) is 1:
+            return self.is_logic_consequence_of_empty_set(formula)
+
+        truth_table = SetTruthTable(formulas_set + [formula])
+        formula = Interpreter.parse_expression(formula)
+
+        formulas = {}
+        for f in formulas_set:
+            form = Interpreter.parse_expression(f)
+            formulas[form.str_representation()] = form
+
+        set_models = truth_table.get_formulas_set_models(formulas)
+        formula_models = truth_table.get_formula_models(
+            formula.str_representation()
+        )
+
+        logic_consequence = True
+        for valuation_index, valuation in set_models.items():
+            if valuation_index not in formula_models:
+                logic_consequence = False
+                break
+
+        consequence = 'SIM' if logic_consequence else 'NAO'
+
+        return '[%s, [%s]]' % (
+            consequence,
+            truth_table.str_representation()
+        )
+
+    def is_logic_consequence_of_empty_set(self, formula):
+        """Check if a formula is logic consequence of the empty set."""
+        truth_table = TruthTable(formula)
+        models = truth_table.get_formula_models()
+
+        logic_consequence = True
+        for valuation_index, valuation in models.items():
+            if valuation[1] is False:
+                logic_consequence = False
+                break
+
+        consequence = 'SIM' if logic_consequence else 'NAO'
+
+        return '[%s, [%s]]' % (
+            consequence,
+            truth_table.str_representation()
+        )
+
+    def parse(self, line):
+        """Parse a bracketed, comma separated formulas into a list."""
+        # Remove the operation symbol from the line
+        line = line.replace(self.SYMBOL, '')
+        # Remove the whitespaces and the first character (that will be a comma)
+        line = "".join(line.split())[1:]
+        # Remove the brackets of the string
+        line = line.replace('[', '').replace(']', '')
+        # Split the line on comma to get all formulas of the set as list
+        args = line.split(',')
+        # The set of formulas will be all the elements but the last one
+        formulas_set = args[:-1]
+        # The formula will be the last element in the list
+        formula = args[-1]
+        return [formulas_set, formula]

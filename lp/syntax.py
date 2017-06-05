@@ -65,6 +65,10 @@ class PropositionalSymbol(Symbol):
         """Evaluate symbol with given values."""
         return symbol_values[self.str_representation()]
 
+    def count_terms(self):
+        """Count the terms of the formula."""
+        return 1
+
 
 class PontuationSymbol(Symbol):
     """
@@ -127,7 +131,7 @@ class BinaryOperator(Operator):
 
         Return itself and the subformulas of its first and second args.
         """
-        return [self] + self.arg1.subformulas() + self.arg2.subformulas()
+        return self.arg1.subformulas() + self.arg2.subformulas() + [self]
 
     def str_representation(self):
         """String representation of the formula."""
@@ -150,6 +154,10 @@ class BinaryOperator(Operator):
 
         return arg1_repr + self.SYMBOL + arg2_repr
 
+    def count_terms(self):
+        """Count the terms of the formula."""
+        return 1 + self.arg1.count_terms() + self.arg2.count_terms()
+
 
 class UnaryOperator(Operator):
     """Describe unary operators."""
@@ -164,7 +172,7 @@ class UnaryOperator(Operator):
 
         Return itself and the subformulas of its arg.
         """
-        return [self] + self.arg1.subformulas()
+        return self.arg1.subformulas() + [self]
 
     def str_representation(self):
         """String representation of the formula."""
@@ -172,6 +180,10 @@ class UnaryOperator(Operator):
             return self.SYMBOL + self.arg1.str_representation()
         else:
             return self.SYMBOL + '(' + self.arg1.str_representation() + ')'
+
+    def count_terms(self):
+        """Count the terms of the formula."""
+        return 1 + self.arg1.count_terms()
 
 
 class Negation(UnaryOperator):

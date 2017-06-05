@@ -319,6 +319,10 @@ class TruthTable:
     def order_lexicographically(self, formulas):
         """Order a set of formulas lexicographically."""
         # TO-DO
+        if formulas and formulas[0].is_a(PropositionalSymbol):
+            formulas.sort(key=lambda f: f.value)
+        elif formulas and formulas[0].is_a(Operator):
+            formulas.sort(key=lambda f: f.count_terms())
         return formulas
 
     def get_symbols_value_for_line(self, line_index, lines=False):
@@ -467,17 +471,15 @@ class SetTruthTable(TruthTable):
         return super(SetTruthTable, self) \
             .get_formula_models(self.formulas[formula])
 
-    def get_formula_valuations(self, formula):
-        """Get the valuations of formula in the given set."""
-        return super(SetTruthTable, self) \
-            .get_formula_valuations(self.formulas[formula])
-
-    def get_formulas_set_models(self):
+    def get_formulas_set_models(self, formulas={}):
         """Get the models of the set of formulas."""
+        if not formulas:
+            formulas = self.formulas
+
         formula_indexes = {}
         # Find out the formulas indexes in the table
         for formula_index, formula in enumerate(self.lines[0]):
-            if formula.str_representation() in self.formulas:
+            if formula.str_representation() in formulas:
                 formula_indexes[formula_index] = formula
 
         models = {}
