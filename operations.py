@@ -75,8 +75,12 @@ class SemanticEquivalence(Operation):
     def check_equivalence(self, formula1, formula2):
         """."""
         truth_table = SetTruthTable([formula1, formula2])
-        models1 = truth_table.get_formula_models(formula1)
-        models2 = truth_table.get_formula_models(formula2)
+
+        formula1 = Interpreter.parse_expression(formula1)
+        formula2 = Interpreter.parse_expression(formula2)
+
+        models1 = truth_table.get_formula_models(formula1.str_representation())
+        models2 = truth_table.get_formula_models(formula2.str_representation())
 
         equivalent = True
         for valuation_index, valuation in models1.items():
@@ -163,10 +167,10 @@ class LogicConsequence(Operation):
     def is_logic_consequence_of_empty_set(self, formula):
         """Check if a formula is logic consequence of the empty set."""
         truth_table = TruthTable(formula)
-        models = truth_table.get_formula_models()
+        valuations = truth_table.get_formula_valuations()
 
         logic_consequence = True
-        for valuation_index, valuation in models.items():
+        for valuation_index, valuation in valuations.items():
             if valuation[1] is False:
                 logic_consequence = False
                 break
