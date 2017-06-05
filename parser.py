@@ -10,7 +10,10 @@ from handler import OperationHandler
 # The filename should be the first argument
 input_file = sys.argv[1]
 # The result filename should be the second argument
-result_file = sys.argv[2] if 2 in sys.argv else 'results.txt'
+try:
+    result_file = sys.argv[2]
+except IndexError:
+    result_file = 'results.txt'
 
 if not path.isfile(input_file):
     raise Exception('File not found.')
