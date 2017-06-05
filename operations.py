@@ -64,22 +64,19 @@ class SemanticEquivalence(Operation):
 
     def perform(self, formula1, formula2):
         """Check if the two formulas are equivalent."""
-        truth_table1 = TruthTable(formula1)
-        truth_table2 = TruthTable(formula2)
-
-        quid_pro_quo = self.check_equivalence(truth_table1, truth_table2)
+        quid_pro_quo, truth_table = self.check_equivalence(formula1, formula2)
         equivalent = 'SIM' if quid_pro_quo else 'NAO'
 
-        return '[%s, [%s, %s]]' % (
+        return '[%s, [%s]]' % (
             equivalent,
-            truth_table1.str_representation(),
-            truth_table2.str_representation()
+            truth_table.str_representation()
         )
 
-    def check_equivalence(self, table1, table2):
+    def check_equivalence(self, formula1, formula2):
         """."""
-        models1 = table1.get_formula_models()
-        models2 = table2.get_formula_models()
+        truth_table = SetTruthTable([formula1, formula2])
+        models1 = truth_table.get_formula_models(formula1)
+        models2 = truth_table.get_formula_models(formula2)
 
         equivalent = True
         for valuation_index, valuation in models1.items():
@@ -94,7 +91,7 @@ class SemanticEquivalence(Operation):
                     equivalent = False
                     break
 
-        return equivalent
+        return equivalent, truth_table
 
 
 class Consistency(Operation):
